@@ -8,15 +8,14 @@
 global	main
 section	.bss
 	argv:	resq	1
-	buff:	resb	16
-	incr:	resq	1
-	incw:	resq	1
-	arg1:	resq	1
-	arg2:	resq	1
+	buff:	resb	9
 	oper:	resb	1
 section	.data
+	arg1:	dq	0
+	arg2:	dq	0
 	newstrla	help,	'Put your expression into the arguments, each symbol and number separated by spaces.'
 	newstrla	max,	'Program is limited to 8 bytes (16 hex chars) in each number and only one operation.'
+	newstrla	badop,	'Must use + or - between hex numbers.'
 section	.code
 
 %macro	handlenoargs	0
@@ -35,36 +34,80 @@ section	.code
 	syscall
 %endmacro
 
-%macro	readarg	1
-	mov	[incw],	0
-%%l:	mov	rax,	[%1]
-	mov	al,	[rax]
-	mov	dl,	0
-	cmp	al,	dl
-	je	end
-	mov	[buff],	al
+;reads a single argument into the output register with no extra characters
+%macro	readsinglearg	4
+	dgr	%1,	1;zeroed output register
+	dgr	%2,	2;read-into register
+	dgr	%3,	3;zeroed test-against register
+	dgr	%4,	4;input address of first character
+%%arl	mov	g2b,	[g4]
+	cmp	g2b,	g3b
+	je	%%earg;end of arg if null char detected
+	shl	g1,	8
+	or	g1,	g2
+	inc	g4
+	jmp	%%arl;arg read loop
+%%earg:	bswap	g1
+
+	udgr	1
+	udgr	2
+	udgr	3
+	udgr	4
+	udgr	5
+%endmacro
+
+handlebadop:
 	mov	rax,	sys_write
-	mov	rdi,	stdout
-	mov	rsi,	buff
+	mov	rdx,	stdout
+	mov	rsi,	sbadop
+	mov	rdi,	[lbadop]
+	syscall
+	mov	rax,	sys_ret
 	mov	rdx,	1
 	syscall
-	mov	rax,	[%1]
-	inc	rax
-	mov	[%1],	rax
-	jmp	.l
-%%end:
-%endmacro
 
 main:
 	mov	rax,	1
 	cmp	rax,	rdi
 	jne	prsargs
-	handlnoargs
+	handlenoargs
 prsargs:;parse args
-	add	rsi,	qsize(1)
 	mov	[argv],	rsi
+	add	rsi,	qsize(1);select argv[1]
 	mov	rsi,	[rsi]
-	mov	[incr],	rsi
-mov	rax,	sys_ret
+	xor	rdi,	rdi
+	xor	rdx,	rdx
+	readsinglearg	rdx,	rax,	rdi,	rsi
+	frhexdu	r9,	rsi,	rdx
+	mov	rsi,	[argv]
+	add	rsi,	qsize(3);select argv[3]
+	mov	rsi,	[rsi]
+	xor	rdx,	rdx
+	readsinglearg	rdx,	rax,	rdi,	rsi
+	frhexdu r10,	rsi,	rdx
+	mov	rsi,	[argv]
+	add	rsi,	qsize(2);select argv[2]
+	mov	rsi,	[rsi]
+	mov	dl,	[rsi]
+	mov	al,	'+'
+	cmp	al,	dl
+	je	add
+	mov	al,	'-'
+	cmp	al,	dl
+	je	sub
+	jmp	handlebadop
+add:	add	r9,	r10
+	jmp	end
+sub:	sub	r9,	r10
+	jmp	end
+end:	tohexdu	rdx,	rsi,	r9
+	mov	[buff],	rdx
+	mov	[buff+8],	byte	0x0A
+	mov	rax,	sys_write
+	mov	rdi,	stdout
+	mov	rsi,	buff
+	mov	rdx,	9
+	syscall
+	mov	rax,	sys_ret
 	mov	rdi,	0
 	syscall
