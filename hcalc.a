@@ -1,0 +1,70 @@
+;hex calculator for the command line
+%include	'./mystdasmlib/genreg.ah'
+%include	'./mystdasmlib/hex.ah'
+%include	'./mystdasmlib/syscall.ah'
+%include	'./mystdasmlib/cstring.ah'
+%include	'./mystdasmlib/size.ah'
+
+global	main
+section	.bss
+	argv:	resq	1
+	buff:	resb	16
+	incr:	resq	1
+	incw:	resq	1
+	arg1:	resq	1
+	arg2:	resq	1
+	oper:	resb	1
+section	.data
+	newstrla	help,	'Put your expression into the arguments, each symbol and number separated by spaces.'
+	newstrla	max,	'Program is limited to 8 bytes (16 hex chars) in each number and only one operation.'
+section	.code
+
+%macro	handlenoargs	0
+	mov	rax,	sys_write
+	mov	rdi,	stdout
+	mov	rsi,	shelp
+	mov	rdx,	[lhelp]
+	syscall
+	mov	rax,	sys_write
+	mov	rdi,	stdout
+	mov	rsi,	smax
+	mov	rdx,	[lmax]
+	syscall
+	mov	rax,	sys_ret
+	mov	rdi,	0
+	syscall
+%endmacro
+
+%macro	readarg	1
+	mov	[incw],	0
+%%l:	mov	rax,	[%1]
+	mov	al,	[rax]
+	mov	dl,	0
+	cmp	al,	dl
+	je	end
+	mov	[buff],	al
+	mov	rax,	sys_write
+	mov	rdi,	stdout
+	mov	rsi,	buff
+	mov	rdx,	1
+	syscall
+	mov	rax,	[%1]
+	inc	rax
+	mov	[%1],	rax
+	jmp	.l
+%%end:
+%endmacro
+
+main:
+	mov	rax,	1
+	cmp	rax,	rdi
+	jne	prsargs
+	handlnoargs
+prsargs:;parse args
+	add	rsi,	qsize(1)
+	mov	[argv],	rsi
+	mov	rsi,	[rsi]
+	mov	[incr],	rsi
+mov	rax,	sys_ret
+	mov	rdi,	0
+	syscall
