@@ -4,6 +4,7 @@
 %include	'./mystdasmlib/syscall.ah'
 %include	'./mystdasmlib/cstring.ah'
 %include	'./mystdasmlib/size.ah'
+%include	'./mystdasmlib/util.ah'
 
 global	main
 section	.bss
@@ -34,28 +35,6 @@ section	.code
 	syscall
 %endmacro
 
-;reads a single argument into the output register with no extra characters
-%macro	readsinglearg	4
-	dgr	%1,	1;zeroed output register
-	dgr	%2,	2;read-into register
-	dgr	%3,	3;zeroed test-against register
-	dgr	%4,	4;input address of first character
-%%arl	mov	g2b,	[g4]
-	cmp	g2b,	g3b
-	je	%%earg;end of arg if null char detected
-	shl	g1,	8
-	or	g1,	g2
-	inc	g4
-	jmp	%%arl;arg read loop
-%%earg:	bswap	g1
-
-	udgr	1
-	udgr	2
-	udgr	3
-	udgr	4
-	udgr	5
-%endmacro
-
 handlebadop:
 	mov	rax,	sys_write
 	mov	rdx,	stdout
@@ -77,13 +56,13 @@ prsargs:;parse args
 	mov	rsi,	[rsi]
 	xor	rdi,	rdi
 	xor	rdx,	rdx
-	readsinglearg	rdx,	rax,	rdi,	rsi
+	rdztstr	rdx,	rax,	rdi,	rsi
 	frhexdu	r9,	rsi,	rdx
 	mov	rsi,	[argv]
 	add	rsi,	qsize(3);select argv[3]
 	mov	rsi,	[rsi]
 	xor	rdx,	rdx
-	readsinglearg	rdx,	rax,	rdi,	rsi
+	rdztstr	rdx,	rax,	rdi,	rsi
 	frhexdu r10,	rsi,	rdx
 	mov	rsi,	[argv]
 	add	rsi,	qsize(2);select argv[2]
