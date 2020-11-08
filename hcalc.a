@@ -68,16 +68,31 @@ prsargs:;parse args
 	add	rsi,	qsize(2);select argv[2]
 	mov	rsi,	[rsi]
 	mov	dl,	[rsi]
-	mov	al,	'+'
-	cmp	al,	dl
+	mov	dil,	'+'
+	cmp	dil,	dl
 	je	add
-	mov	al,	'-'
-	cmp	al,	dl
+	mov	dil,	'-'
+	cmp	dil,	dl
 	je	sub
+	mov	dil,	'x'
+	cmp	dil,	dl
+	je	mul
+	mov	dil,	'/'
+	cmp	dil,	dl
+	je	div
 	jmp	handlebadop
 add:	add	r9,	r10
 	jmp	end
 sub:	sub	r9,	r10
+	jmp	end
+mul:	mov	rax,	r9
+	mul	r10
+	mov	r9,	rax
+	jmp	end
+div:	mov	rax,	r9
+	xor	rdx,	rdx
+	div	r10
+	mov	r9,	rax
 	jmp	end
 end:	tohexdu	rdx,	rsi,	r9
 	mov	[buff],	rdx
