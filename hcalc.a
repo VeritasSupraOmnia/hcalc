@@ -72,13 +72,21 @@ div:	mov	rax,	r9
 	div	r10
 	mov	r9,	rax
 	jmp	end
-end:	tohexdu	rdx,	rsi,	r9
+end:	lzcnt	eax,	r9d
+	xor	rdx,	rdx
+	mov	r8,	4
+	div	r8
+	mov	r8,	8
+	sub	r8,	rax
+	inc	r8
+	tohexdu	rdx,	rsi,	r9
 	mov	[buff],	rdx
 	mov	[buff+8],	byte	0x0A
+	mov	rsi,	buff
+	add	rsi,	rax	
 	mov	rax,	sys_write
 	mov	rdi,	stdout
-	mov	rsi,	buff
-	mov	rdx,	9
+	mov	rdx,	r8
 	syscall
 	mov	rax,	sys_ret
 	mov	rdi,	0
