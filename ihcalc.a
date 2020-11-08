@@ -1,4 +1,4 @@
-;hex calculator for the command line
+;calculates inputed hex value but instead of outputted the hex result, it outputs the binary value to stdout so it can be piped directly to another program without conversion
 %include	'./mystdasmlib/genreg.ah'
 %include	'./mystdasmlib/hex.ah'
 %include	'./mystdasmlib/syscall.ah'
@@ -10,16 +10,12 @@
 global	main
 section	.bss
 	argv:	resq	1
-	buff:	resb	9
-	oper:	resb	1
+	buff:	resb	8	
 section	.data
-	arg1:	dq	0
-	arg2:	dq	0
 	newstrla	help,	'Put your expression into the arguments, each symbol and number separated by spaces.'
 	newstrla	max,	'Program is limited to 8 bytes (16 hex chars) in each number and only one operation.'
 	newstrla	badop,	'Must use + or - between hex numbers.'
 section	.code
-
 
 handlebadop:
 	badop
@@ -72,13 +68,12 @@ div:	mov	rax,	r9
 	div	r10
 	mov	r9,	rax
 	jmp	end
-end:	tohexdu	rdx,	rsi,	r9
-	mov	[buff],	rdx
-	mov	[buff+8],	byte	0x0A
+end:
+	mov	[buff],	r9
 	mov	rax,	sys_write
 	mov	rdi,	stdout
 	mov	rsi,	buff
-	mov	rdx,	9
+	mov	rdx,	8
 	syscall
 	mov	rax,	sys_ret
 	mov	rdi,	0

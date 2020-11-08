@@ -1,0 +1,27 @@
+%macro	noargs    0
+mov     rax,    sys_write
+mov     rdi,    stdout
+mov     rsi,    shelp
+mov     rdx,    [lhelp]
+syscall
+mov     rax,    sys_write
+mov     rdi,    stdout
+mov     rsi,    smax
+mov     rdx,    [lmax]
+syscall
+mov     rax,    sys_ret
+mov     rdi,    0
+syscall
+%endmacro
+
+%macro	badop	0
+	mov     rax,    sys_write
+	mov     rdx,    stdout
+	mov     rsi,    sbadop
+	mov     rdi,    [lbadop]
+	syscall
+	mov     rax,    sys_ret
+	mov     rdx,    1
+	syscall
+%endmacro
+
