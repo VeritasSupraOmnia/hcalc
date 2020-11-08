@@ -7,4 +7,4 @@ note:	currently only works on 8 digit hex and uppercase letters. The latter is t
 
 usage:	hcalc 1A + 2F
 
-result: 00000049
+result:	49
